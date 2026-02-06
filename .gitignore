@@ -1,0 +1,8 @@
+node_modules
+.next
+.env
+npm-debug.log*
+.yarn/cache
+.DS_Store
+.vercel
+.env*.local

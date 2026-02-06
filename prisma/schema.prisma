@@ -1,0 +1,114 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PATIENT
+  ADMIN
+  DOCTOR
+}
+
+enum Status {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PAID
+  PENDING
+  PARTIAL
+}
+
+enum TreatmentStatus {
+  PENDING
+  PARTIAL
+  COMPLETED
+}
+
+model User {
+  // Use client‑side UUID generation so Prisma always sends a valid id
+  id            String        @id @default(uuid()) @db.Uuid
+  email         String        @unique
+  name          String
+  phone         String?
+  password      String?       // Optional for guest users
+  role          Role          @default(PATIENT)
+  appointments  Appointment[]
+  doctorAppointments Appointment[] @relation("DoctorAppointments")
+  availabilities Availability[]
+  blockedSlots  BlockedSlot[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Appointment {
+  id            String        @id @default(cuid())
+  patientId     String?       @db.Uuid
+  patient       User?         @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  // Guest appointment fields
+  patientName   String?
+  patientEmail  String?
+  patientPhone  String?
+  // Service and scheduling
+  service       String
+  date          DateTime
+  status        Status        @default(CONFIRMED)
+  notes         String?
+  // Payment fields
+  paymentAmount Decimal?      @db.Decimal(10, 2)
+  paymentStatus PaymentStatus? @default(PENDING)
+  treatmentStatus TreatmentStatus @default(PENDING)
+  // Tracking fields
+  createdBy    String?        // "ADMIN" or "USER"
+  doctorId     String?        @db.Uuid
+  doctor       User?          @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  adminConfirmed Boolean      @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([date])
+  @@index([status])
+  @@index([paymentStatus])
+}
+
+model Availability {
+  id        String   @id @default(cuid())
+  // If doctorId is null, this row represents a global default office schedule.
+  // If doctorId is set, the row applies only to that specific doctor.
+  doctorId  String?  @db.Uuid
+  doctor    User?    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  dayOfWeek Int      // 0-6 (Sunday-Saturday)
+  startTime String   // "09:00"
+  endTime   String   // "17:00"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([doctorId, dayOfWeek])
+}
+
+model BlockedSlot {
+  id        String   @id @default(cuid())
+  /// Optional: if set, this block only applies to a specific doctor.
+  doctorId  String?  @db.Uuid
+  doctor    User?    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  /// Exact date and time that is blocked.
+  date      DateTime
+  /// Optional human-readable reason (e.g. "Lunch", "Public Holiday").
+  reason    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([doctorId, date])
+}
+
