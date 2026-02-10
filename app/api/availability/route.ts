@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Filter out booked slots
-    const bookedTimes = appointments.map((apt) =>
+    const bookedTimes = appointments.map((apt: { date: Date }) =>
       format(apt.date, "HH:mm")
     )
 

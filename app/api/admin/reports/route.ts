@@ -69,7 +69,19 @@ export async function GET(request: NextRequest) {
     })
 
     // Transform to report data
-    const reportData: ReportData[] = appointments.map((apt) => ({
+    type AptRow = {
+      date: Date
+      service: string
+      paymentAmount: unknown
+      paymentStatus: string | null
+      patientName: string | null
+      patientEmail: string | null
+      patientPhone: string | null
+      patient: { name: string | null; email: string | null; phone: string | null } | null
+      doctor: { name: string | null; email: string | null } | null
+    }
+
+    const reportData: ReportData[] = (appointments as AptRow[]).map((apt: AptRow) => ({
       date: apt.date.toISOString(),
       time: format(new Date(apt.date), "HH:mm"),
       name: apt.patient?.name || apt.patientName || "N/A",

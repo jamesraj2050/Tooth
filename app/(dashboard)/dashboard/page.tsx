@@ -8,6 +8,17 @@ import Link from "next/link"
 import { format, startOfDay } from "date-fns"
 import { CancelAppointmentButton } from "./CancelAppointmentButton"
 
+/** Explicit appointment type so Vercel build never hits implicit-any. */
+type PatientAppointmentRow = {
+  id: string
+  date: Date
+  service: string
+  status: string
+  notes: string | null
+  adminConfirmed: boolean
+  doctor: { name: string | null; email: string | null } | null
+}
+
 export default async function DashboardPage() {
   const session = await auth()
 
@@ -50,20 +61,22 @@ export default async function DashboardPage() {
 
   const todayStart = startOfDay(new Date())
 
-  const upcomingAppointments = user.appointments
+  const appointments: PatientAppointmentRow[] = user.appointments as PatientAppointmentRow[]
+
+  const upcomingAppointments = appointments
     .filter(
-      (apt) =>
+      (apt: PatientAppointmentRow) =>
         new Date(apt.date) >= todayStart &&
         apt.status !== "CANCELLED" &&
         apt.status !== "COMPLETED"
     )
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .sort((a: PatientAppointmentRow, b: PatientAppointmentRow) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
   const currentAppointment = upcomingAppointments[0]
   const otherUpcomingAppointments = upcomingAppointments.slice(1)
 
-  const pastAppointments = user.appointments.filter(
-    (apt) =>
+  const pastAppointments = appointments.filter(
+    (apt: PatientAppointmentRow) =>
       new Date(apt.date) < todayStart ||
       apt.status === "CANCELLED" ||
       apt.status === "COMPLETED"
@@ -179,7 +192,7 @@ export default async function DashboardPage() {
             </div>
 
             <div className="space-y-3 sm:space-y-4">
-              {otherUpcomingAppointments.map((appointment) => (
+              {otherUpcomingAppointments.map((appointment: PatientAppointmentRow) => (
                 <div
                   key={appointment.id}
                   className="p-4 sm:p-6 bg-gradient-to-br from-[#f5f5f7] to-white rounded-2xl border border-[#e5e5ea] hover:shadow-md transition-shadow duration-200"
@@ -240,7 +253,7 @@ export default async function DashboardPage() {
               Appointment History
             </h2>
             <div className="space-y-3 sm:space-y-4">
-              {pastAppointments.map((appointment) => (
+              {pastAppointments.map((appointment: PatientAppointmentRow) => (
                 <div
                   key={appointment.id}
                   className="p-4 sm:p-6 bg-gradient-to-br from-[#f5f5f7] to-white rounded-2xl border border-[#e5e5ea] hover:shadow-md transition-shadow duration-200"

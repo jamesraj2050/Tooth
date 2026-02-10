@@ -4,6 +4,22 @@ import { prisma, setCurrentUserIdForRLS } from "@/lib/prisma"
 import { format } from "date-fns"
 import { DoctorDashboardClient } from "./DoctorDashboardClient"
 
+/** Explicit type so the build never hits implicit-any errors. */
+type DoctorAppointmentRow = {
+  id: string
+  date: Date
+  service: string
+  status: string
+  notes: string | null
+  paymentAmount: unknown
+  paymentStatus: string | null
+  treatmentStatus: string
+  patientName: string | null
+  patientEmail: string | null
+  patientPhone: string | null
+  patient: { name: string; email: string; phone: string | null } | null
+}
+
 export default async function DoctorPage() {
   const session = await auth()
 
@@ -20,7 +36,7 @@ export default async function DoctorPage() {
     redirect("/dashboard")
   }
 
-  const appointments = await prisma.appointment.findMany({
+  const appointments: DoctorAppointmentRow[] = await prisma.appointment.findMany({
     where: {
       doctorId: user.id,
       status: {
@@ -43,7 +59,7 @@ export default async function DoctorPage() {
   today.setHours(0, 0, 0, 0)
 
   const todayAppointments = appointments.filter(
-    (apt) =>
+    (apt: DoctorAppointmentRow) =>
       format(new Date(apt.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
   )
 
@@ -51,14 +67,14 @@ export default async function DoctorPage() {
     total: appointments.length,
     today: todayAppointments.length,
     pendingTreatments: appointments.filter(
-      (apt) =>
+      (apt: DoctorAppointmentRow) =>
         apt.treatmentStatus === "PENDING" ||
         apt.treatmentStatus === "PARTIAL"
     ).length,
   }
 
   // Serialize appointments for client component
-  const serializedAppointments = appointments.map((apt) => ({
+  const serializedAppointments = appointments.map((apt: DoctorAppointmentRow) => ({
     id: apt.id,
     date: apt.date.toISOString(),
     service: apt.service,
@@ -81,4 +97,3 @@ export default async function DoctorPage() {
     />
   )
 }
-

@@ -4,6 +4,27 @@ import { prisma, setCurrentUserIdForRLS } from "@/lib/prisma"
 import { format } from "date-fns"
 import { AdminDashboardClient } from "./AdminDashboardClient"
 
+/** Explicit type so TypeScript never falls back to implicit any —
+ *  even when Prisma client types are unavailable during Vercel build. */
+type AppointmentRow = {
+  id: string
+  date: Date
+  service: string
+  status: string
+  notes: string | null
+  paymentAmount: unknown
+  paymentStatus: string | null
+  treatmentStatus: string
+  createdBy: string | null
+  adminConfirmed: boolean
+  patientId: string | null
+  patientName: string | null
+  patientEmail: string | null
+  patientPhone: string | null
+  patient: { name: string; email: string; phone: string | null } | null
+  doctor: { name: string | null; email: string } | null
+}
+
 export default async function AdminPage() {
   const session = await auth()
 
@@ -21,7 +42,7 @@ export default async function AdminPage() {
     redirect("/dashboard")
   }
 
-  const appointments = await prisma.appointment.findMany({
+  const appointments: AppointmentRow[] = await prisma.appointment.findMany({
     orderBy: { date: "asc" },
     include: {
       patient: {
@@ -41,13 +62,14 @@ export default async function AdminPage() {
   })
 
   const today = new Date()
+
   const todayAppointments = appointments.filter(
-    (apt) =>
+    (apt: AppointmentRow) =>
       format(new Date(apt.date), "yyyy-MM-dd") === format(today, "yyyy-MM-dd")
   )
 
   const upcomingAppointments = appointments.filter(
-    (apt) => new Date(apt.date) >= today && apt.status !== "CANCELLED"
+    (apt: AppointmentRow) => new Date(apt.date) >= today && apt.status !== "CANCELLED"
   )
 
   const stats = {
@@ -56,13 +78,13 @@ export default async function AdminPage() {
     upcoming: upcomingAppointments.length,
     patients: new Set(
       appointments
-        .map((apt) => apt.patientId || apt.patientEmail)
+        .map((apt: AppointmentRow) => apt.patientId || apt.patientEmail)
         .filter(Boolean)
     ).size,
   }
 
   // Serialize appointments for client component
-  const serializedAppointments = appointments.map((apt) => ({
+  const serializedAppointments = appointments.map((apt: AppointmentRow) => ({
     id: apt.id,
     date: apt.date.toISOString(),
     service: apt.service,
@@ -86,4 +108,3 @@ export default async function AdminPage() {
     />
   )
 }
-

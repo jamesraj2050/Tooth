@@ -39,7 +39,7 @@ async function pickDoctorForSlot(
     return null
   }
 
-  const doctorIdSet = new Set(doctors.map((d) => d.id))
+  const doctorIdSet = new Set(doctors.map((d: { id: string }) => d.id))
 
   // Find doctors already booked at this exact time
   const appointmentsAtTime = await prisma.appointment.findMany({

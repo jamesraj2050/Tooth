@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
           slotDateTime.setHours(hour, minute, 0, 0)
 
           // Check if this slot is booked
-          const appointment = appointments.find((apt) => {
+          const appointment = appointments.find((apt: { date: Date }) => {
             const aptDate = new Date(apt.date)
             return (
               format(aptDate, "yyyy-MM-dd") === format(day, "yyyy-MM-dd") &&

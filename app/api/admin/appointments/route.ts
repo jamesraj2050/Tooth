@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
       })
 
       if (allDoctors.length > 0) {
-        const doctorIds = allDoctors.map((d) => d.id)
+        const doctorIds = allDoctors.map((d: { id: string }) => d.id)
 
         // Doctors who are actively available on this weekday AND within the time window
         const availabilities = await prisma.availability.findMany({
@@ -139,15 +139,16 @@ export async function POST(request: NextRequest) {
 
         const minutesSinceMidnight = hours * 60 + minutes
 
-        const availableDoctorIds = availabilities
-          .filter((a) => {
+        type AvailRow = { startTime: string; endTime: string; doctorId: string | null }
+        const availableDoctorIds = (availabilities as AvailRow[])
+          .filter((a: AvailRow) => {
             const [sh, sm] = a.startTime.split(":").map(Number)
             const [eh, em] = a.endTime.split(":").map(Number)
             const startMinutes = sh * 60 + sm
             const endMinutes = eh * 60 + em
             return minutesSinceMidnight >= startMinutes && minutesSinceMidnight < endMinutes
           })
-          .map((a) => a.doctorId!)
+          .map((a: AvailRow) => a.doctorId!)
 
         if (availableDoctorIds.length > 0) {
           // Count how many appointments each available doctor already has today
@@ -171,8 +172,8 @@ export async function POST(request: NextRequest) {
           })
 
           const counts = new Map<string, number>()
-          availableDoctorIds.forEach((id) => counts.set(id, 0))
-          todaysAppointments.forEach((apt) => {
+          availableDoctorIds.forEach((id: string) => counts.set(id, 0))
+          todaysAppointments.forEach((apt: { doctorId: string | null }) => {
             if (apt.doctorId) {
               counts.set(apt.doctorId, (counts.get(apt.doctorId) ?? 0) + 1)
             }
