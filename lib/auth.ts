@@ -2,6 +2,7 @@ import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import { z } from "zod"
+import { getSupabaseEmailStatusByEmail } from "@/lib/supabaseServer"
 
 // #region agent log
 if (typeof process !== 'undefined' && process.versions?.node) {
@@ -45,6 +46,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         // Check if user has a password (guest users might not)
         if (!user.password) {
           return null
+        }
+
+        // Patients must have verified email (via Supabase) before logging in.
+        // Legacy patient accounts without a Supabase Auth user are not blocked.
+        if (user.role === "PATIENT") {
+          try {
+            const supa = await getSupabaseEmailStatusByEmail(email)
+            if (supa.supabaseUserExists && !supa.emailConfirmed) {
+              return null
+            }
+          } catch {
+            // If Supabase is temporarily unavailable, don't block login.
+          }
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password)
@@ -92,13 +106,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     session: async ({ session, token }) => {
       if (session.user) {
         // Extend session.user with our custom fields from the JWT
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         session.user.id = token.id
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         session.user.role = token.role
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         session.user.phone = (token as any).phone || ""
       }

@@ -44,12 +44,46 @@ async function main() {
 
   // Create Admin users
   const adminAccounts = [
-    { email: "Admin@AusDenta.au", name: "Admin", password: "Admin@135" },
+    { email: "Admin1@gmail.com", name: "Admin1", password: "Admin1@135" },
     { email: "Admin2@gmail.com", name: "Admin2", password: "Admin2@135" },
   ]
 
   for (const admin of adminAccounts) {
     const hashedPassword = await bcrypt.hash(admin.password, 10)
+
+    // If the old admin email exists, migrate it to the new email (for the first admin only).
+    if (admin.email.toLowerCase() === "admin1@gmail.com") {
+      const oldEmail = "Admin@AusDenta.au"
+      const oldAdmin = await prisma.user.findUnique({ where: { email: oldEmail } })
+      const newAdmin = await prisma.user.findUnique({ where: { email: admin.email } })
+
+      if (newAdmin) {
+        await prisma.user.update({
+          where: { email: admin.email },
+          data: { password: hashedPassword, role: "ADMIN", name: admin.name },
+        })
+        console.log(`✅ Updated admin user ${admin.email}`)
+        if (oldAdmin) {
+          await prisma.user.delete({ where: { email: oldEmail } })
+          console.log(`🧹 Removed old admin user ${oldEmail}`)
+        }
+        continue
+      }
+
+      if (oldAdmin) {
+        await prisma.user.update({
+          where: { email: oldEmail },
+          data: {
+            email: admin.email,
+            password: hashedPassword,
+            role: "ADMIN",
+            name: admin.name,
+          },
+        })
+        console.log(`✅ Renamed admin user ${oldEmail} -> ${admin.email}`)
+        continue
+      }
+    }
 
     const existingAdmin = await prisma.user.findUnique({
       where: { email: admin.email },

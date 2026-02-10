@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 import { startOfDay, endOfDay } from "date-fns"
+import { sendAppointmentConfirmedEmail } from "@/lib/email"
 
 const appointmentSchema = z.object({
   service: z.string(),
@@ -168,7 +169,27 @@ export async function POST(request: NextRequest) {
           connect: { id: user.id },
         },
       },
+      include: {
+        doctor: { select: { name: true } },
+        patient: { select: { name: true, email: true, phone: true } },
+      },
     })
+
+    // Fire-and-forget: send appointment confirmation email (don’t block booking UX).
+    const patientEmail = appointment.patient?.email || validatedData.email
+    if (patientEmail) {
+      sendAppointmentConfirmedEmail({
+        toEmail: patientEmail,
+        patientName: appointment.patient?.name || validatedData.name,
+        patientPhone: appointment.patient?.phone || validatedData.phone,
+        service: appointment.service,
+        appointmentDate: appointment.date,
+        doctorName: appointment.doctor?.name || null,
+        notes: appointment.notes || null,
+      }).catch((e) => {
+        console.error("Failed to send appointment confirmation email:", e)
+      })
+    }
 
     return NextResponse.json(
       { success: true, appointment },

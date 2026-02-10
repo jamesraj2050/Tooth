@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import { sendAppointmentConfirmedEmail } from "@/lib/email"
 
 const updateAppointmentSchema = z.object({
   date: z.string().optional(),
@@ -32,6 +33,35 @@ export async function PATCH(
 
     const body = await request.json()
     const validatedData = updateAppointmentSchema.parse(body)
+
+    const prev = await prisma.appointment.findUnique({
+      where: { id: params.id },
+      select: {
+        adminConfirmed: true,
+        date: true,
+        service: true,
+        notes: true,
+        patientName: true,
+        patientEmail: true,
+        patientPhone: true,
+        patient: {
+          select: {
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+        doctor: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    })
+
+    if (!prev) {
+      return NextResponse.json({ error: "Appointment not found" }, { status: 404 })
+    }
 
     const updateData: any = {}
 
@@ -79,8 +109,38 @@ export async function PATCH(
             phone: true,
           },
         },
+        doctor: {
+          select: {
+            name: true,
+          },
+        },
       },
     })
+
+    const flippedToConfirmed =
+      validatedData.adminConfirmed === true && prev.adminConfirmed === false
+
+    if (flippedToConfirmed) {
+      const patientEmail = appointment.patient?.email || appointment.patientEmail || ""
+      const patientName =
+        appointment.patient?.name || appointment.patientName || "Patient"
+      const patientPhone = appointment.patient?.phone || appointment.patientPhone || null
+
+      // Fire-and-forget (don’t block admin UI on email issues)
+      if (patientEmail) {
+        sendAppointmentConfirmedEmail({
+          toEmail: patientEmail,
+          patientName,
+          patientPhone,
+          service: appointment.service,
+          appointmentDate: appointment.date,
+          doctorName: appointment.doctor?.name || null,
+          notes: appointment.notes || null,
+        }).catch((e) => {
+          console.error("Failed to send appointment confirmation email:", e)
+        })
+      }
+    }
 
     return NextResponse.json({ success: true, appointment })
   } catch (error) {

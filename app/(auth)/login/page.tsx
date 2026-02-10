@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -8,21 +8,29 @@ import { Card } from "@/components/ui/Card"
 import { Input } from "@/components/ui/Input"
 import { Button } from "@/components/ui/Button"
 import { signIn } from "next-auth/react"
-import { Mail, Lock } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl") || ""
+  const verifiedParam = searchParams.get("verified") || ""
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   })
   const [error, setError] = useState("")
   const [errorType, setErrorType] = useState<
-    "" | "user_not_found" | "wrong_password" | "generic"
+    "" | "user_not_found" | "wrong_password" | "email_unverified" | "generic"
   >("")
   const [isLoading, setIsLoading] = useState(false)
+  const [resendStatus, setResendStatus] = useState<"" | "sending" | "sent">("")
+
+  useEffect(() => {
+    if (verifiedParam === "true") {
+      setError("")
+      setErrorType("")
+    }
+  }, [verifiedParam])
 
   const persistRegisterPrefill = () => {
     try {
@@ -37,9 +45,32 @@ export default function LoginPage() {
     e.preventDefault()
     setError("")
     setErrorType("")
+    setResendStatus("")
     setIsLoading(true)
 
     try {
+      // Check email status first so we can show the right UX message.
+      try {
+        const statusResp = await fetch(
+          `/api/auth/email-status?email=${encodeURIComponent(formData.email)}`
+        )
+        const statusJson = await statusResp.json()
+
+        if (statusJson?.exists === false) {
+          setError("User does not exist — please sign up.")
+          setErrorType("user_not_found")
+          return
+        }
+
+        if (statusJson?.verified === false) {
+          setError("Email not verified. Please verify your email to sign in.")
+          setErrorType("email_unverified")
+          return
+        }
+      } catch {
+        // If status check fails, proceed with normal sign-in behavior.
+      }
+
       const result = await signIn("credentials", {
         email: formData.email,
         password: formData.password,
@@ -74,6 +105,25 @@ export default function LoginPage() {
     }
   }
 
+  const handleResendVerification = async () => {
+    if (!formData.email) return
+    setResendStatus("sending")
+    try {
+      const resp = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email }),
+      })
+      if (!resp.ok) {
+        setResendStatus("")
+        return
+      }
+      setResendStatus("sent")
+    } catch {
+      setResendStatus("")
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background-secondary flex items-center justify-center py-12 px-6">
       <motion.div
@@ -105,6 +155,28 @@ export default function LoginPage() {
                     </Link>
                     .
                   </p>
+                ) : errorType === "email_unverified" ? (
+                  <div className="text-red-600 space-y-2">
+                    <p>{error}</p>
+                    <p className="text-xs text-red-600">
+                      If you are not able to see the mail please check the spam/trash folder for
+                      missing emails.
+                    </p>
+                    <div>
+                      <button
+                        type="button"
+                        onClick={handleResendVerification}
+                        disabled={resendStatus === "sending"}
+                        className="underline font-medium"
+                      >
+                        {resendStatus === "sending"
+                          ? "Sending..."
+                          : resendStatus === "sent"
+                            ? "Verification email sent"
+                            : "Resend verification email"}
+                      </button>
+                    </div>
+                  </div>
                 ) : (
                   <p className="text-red-600">{error}</p>
                 )}
@@ -133,7 +205,21 @@ export default function LoginPage() {
               placeholder="••••••••"
             />
             <div className="flex items-center justify-end">
-              <Link href="/reset-password" className="text-sm text-primary hover:underline">
+              <Link
+                href={
+                  formData.email
+                    ? `/reset-password?email=${encodeURIComponent(formData.email)}`
+                    : "/reset-password"
+                }
+                onClick={() => {
+                  try {
+                    sessionStorage.setItem("reset_prefill_email", formData.email || "")
+                  } catch {
+                    // ignore
+                  }
+                }}
+                className="text-sm text-primary hover:underline"
+              >
                 Forgot password?
               </Link>
             </div>
@@ -150,7 +236,7 @@ export default function LoginPage() {
 
           <div className="mt-6 text-center">
             <p className="text-sm text-text-secondary">
-              Don't have an account?{" "}
+              {"Don't have an account?"}{" "}
               <Link
                 href="/register"
                 onClick={persistRegisterPrefill}

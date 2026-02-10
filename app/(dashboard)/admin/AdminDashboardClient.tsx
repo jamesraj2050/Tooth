@@ -20,6 +20,7 @@ import {
   FileText,
   UserPlus,
   Filter,
+  Home,
 } from "lucide-react"
 import { addDays, endOfDay, format, isSameDay, startOfDay } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -80,13 +81,8 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
   const [doctorForm, setDoctorForm] = useState({ name: "", email: "", phone: "", password: "" })
   const [doctorError, setDoctorError] = useState<string | null>(null)
   const [currentDate, setCurrentDate] = useState<Date>(new Date())
-  // Filter appointments from current date ascending
-  const sortedAppointments = [...appointments].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  )
-  const displayedAppointments = sortedAppointments.filter((apt) =>
-    isSameDay(new Date(apt.date), currentDate)
-  )
+  const [listAll, setListAll] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
 
   const formatPaymentAmount = (amount: number | null) => {
     if (amount === null || Number.isNaN(amount)) {
@@ -109,6 +105,45 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
         return "bg-[#1f2933] text-white"
     }
   }
+
+  const normalizeAppointment = (apt: any, prevApt?: Appointment) => {
+    return {
+      ...apt,
+      paymentAmount: apt.paymentAmount ? Number(apt.paymentAmount) : null,
+      adminConfirmed:
+        typeof apt.adminConfirmed === "boolean"
+          ? apt.adminConfirmed
+          : prevApt?.adminConfirmed ?? false,
+    } as Appointment
+  }
+
+  const getPatientName = (apt: Appointment) => {
+    return apt.patient?.name || apt.patientName || "N/A"
+  }
+
+  const getPatientEmail = (apt: Appointment) => {
+    return apt.patient?.email || apt.patientEmail || "N/A"
+  }
+
+  const getPatientPhone = (apt: Appointment) => {
+    return apt.patient?.phone || apt.patientPhone || "N/A"
+  }
+
+  const query = searchQuery.trim().toLowerCase()
+
+  const sortedAppointmentsAsc = [...appointments].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  )
+  const sortedAppointmentsDesc = [...appointments].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  )
+  // Backward-compat alias (used elsewhere in this file)
+  const sortedAppointments = sortedAppointmentsAsc
+
+  const displayedAppointments = (listAll ? sortedAppointmentsDesc : sortedAppointmentsAsc)
+    .filter((apt) => (listAll ? true : isSameDay(new Date(apt.date), currentDate)))
+    .filter((apt) => apt.status !== "CANCELLED")
+    .filter((apt) => (query ? getPatientName(apt).toLowerCase().includes(query) : true))
 
   const handleCreateAppointment = async (data: AppointmentFormData) => {
     setIsLoading(true)
@@ -182,22 +217,38 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
 
       const { appointments } = await response.json()
       setAppointments((prev) => {
-        const prevMap = new Map(prev.map((a) => [a.id, a]))
-
-        return (appointments || []).map((apt: any) => {
-          const prevApt = prevMap.get(apt.id)
-          return {
-            ...apt,
-            paymentAmount: apt.paymentAmount ? Number(apt.paymentAmount) : null,
-            adminConfirmed:
-              typeof apt.adminConfirmed === "boolean"
-                ? apt.adminConfirmed
-                : prevApt?.adminConfirmed ?? false,
-          }
+        // Replace only the currently selected day's appointments, keep the rest
+        const keep = prev.filter((a) => {
+          const d = new Date(a.date)
+          return d < start || d > end
         })
+
+        const keepMap = new Map(keep.map((a) => [a.id, a]))
+        for (const apt of appointments || []) {
+          const prevApt = keepMap.get(apt.id)
+          keepMap.set(apt.id, normalizeAppointment(apt, prevApt))
+        }
+        return Array.from(keepMap.values())
       })
     } catch (error) {
       console.error("Error refreshing appointments:", error)
+    }
+  }
+
+  const refreshAllAppointments = async () => {
+    try {
+      const response = await fetch(`/api/admin/appointments`)
+      if (!response.ok) return
+
+      const { appointments } = await response.json()
+      setAppointments((prev) => {
+        const prevMap = new Map(prev.map((a) => [a.id, a]))
+        return (appointments || []).map((apt: any) =>
+          normalizeAppointment(apt, prevMap.get(apt.id))
+        )
+      })
+    } catch (error) {
+      console.error("Error refreshing all appointments:", error)
     }
   }
 
@@ -281,18 +332,6 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
     }
   }
 
-  const getPatientName = (apt: Appointment) => {
-    return apt.patient?.name || apt.patientName || "N/A"
-  }
-
-  const getPatientEmail = (apt: Appointment) => {
-    return apt.patient?.email || apt.patientEmail || "N/A"
-  }
-
-  const getPatientPhone = (apt: Appointment) => {
-    return apt.patient?.phone || apt.patientPhone || "N/A"
-  }
-
   const getTreatmentBadgeClass = (status: string | null | undefined) => {
     switch (status) {
       case "COMPLETED":
@@ -331,11 +370,19 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
     let cancelled = false
 
     // Initial refresh when tab/date becomes active
-    refreshAppointmentsForCurrentDate()
+    if (listAll) {
+      refreshAllAppointments()
+    } else {
+      refreshAppointmentsForCurrentDate()
+    }
 
     const intervalId = setInterval(() => {
       if (!cancelled) {
-        refreshAppointmentsForCurrentDate()
+        if (listAll) {
+          refreshAllAppointments()
+        } else {
+          refreshAppointmentsForCurrentDate()
+        }
       }
     }, 20000) // 20 seconds
 
@@ -343,7 +390,7 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
       cancelled = true
       clearInterval(intervalId)
     }
-  }, [activeTab, currentDate])
+  }, [activeTab, currentDate, listAll])
 
   const handleCreateDoctor = async () => {
     setDoctorError(null)
@@ -537,15 +584,15 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
               >
                 <Card
                   className={
-                    "bg-white border border-[#e4e4e7] shadow-sm transition-transform duration-150 " +
+                    "bg-white border border-[#e4e4e7] p-4 shadow-[0_10px_20px_rgba(0,0,0,0.06)] transition-transform duration-150 " +
                     (isTodayCard || isUpcomingCard
                       ? "hover:-translate-y-0.5 cursor-pointer"
                       : "")
                   }
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[#f4f4f5] flex items-center justify-center">
-                      <card.icon className="w-5 h-5 text-[#52525b]" />
+                    <div className="w-9 h-9 rounded-lg bg-[#f4f4f5] flex items-center justify-center">
+                      <card.icon className="w-4 h-4 text-[#52525b]" />
                     </div>
                     <div>
                       <p className="text-xs uppercase tracking-wide text-[#6b7280]">
@@ -568,9 +615,9 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
             <button
               onClick={() => setActiveTab("appointments")}
               className={cn(
-                "relative pb-3 pt-1 px-3 rounded-full transition-all",
+                "relative pb-3 pt-1 px-4 rounded-full transition-all shadow-sm hover:shadow-md",
                 activeTab === "appointments"
-                  ? "text-[#111111] bg-white shadow-sm"
+                  ? "text-[#111111] bg-white shadow-md"
                   : "text-[#6b7280] hover:text-[#111111] hover:bg-white/60"
               )}
             >
@@ -579,9 +626,9 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
             <button
               onClick={() => setActiveTab("reports")}
               className={cn(
-                "relative pb-3 pt-1 px-3 rounded-full transition-all",
+                "relative pb-3 pt-1 px-4 rounded-full transition-all shadow-sm hover:shadow-md",
                 activeTab === "reports"
-                  ? "text-[#111111] bg-white shadow-sm"
+                  ? "text-[#111111] bg-white shadow-md"
                   : "text-[#6b7280] hover:text-[#111111] hover:bg-white/60"
               )}
             >
@@ -590,9 +637,9 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
             <button
               onClick={() => setActiveTab("doctors")}
               className={cn(
-                "relative pb-3 pt-1 px-3 rounded-full transition-all",
+                "relative pb-3 pt-1 px-4 rounded-full transition-all shadow-sm hover:shadow-md",
                 activeTab === "doctors"
-                  ? "text-[#111111] bg-white shadow-sm"
+                  ? "text-[#111111] bg-white shadow-md"
                   : "text-[#6b7280] hover:text-[#111111] hover:bg-white/60"
               )}
             >
@@ -601,9 +648,9 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
             <button
               onClick={() => setActiveTab("slots")}
               className={cn(
-                "relative pb-3 pt-1 px-3 rounded-full transition-all",
+                "relative pb-3 pt-1 px-4 rounded-full transition-all shadow-sm hover:shadow-md",
                 activeTab === "slots"
-                  ? "text-[#111111] bg-white shadow-sm"
+                  ? "text-[#111111] bg-white shadow-md"
                   : "text-[#6b7280] hover:text-[#111111] hover:bg-white/60"
               )}
             >
@@ -612,9 +659,9 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
             <button
               onClick={() => setActiveTab("schedules")}
               className={cn(
-                "relative pb-3 pt-1 px-3 rounded-full transition-all",
+                "relative pb-3 pt-1 px-4 rounded-full transition-all shadow-sm hover:shadow-md",
                 activeTab === "schedules"
-                  ? "text-[#111111] bg-white shadow-sm"
+                  ? "text-[#111111] bg-white shadow-md"
                   : "text-[#6b7280] hover:text-[#111111] hover:bg-white/60"
               )}
             >
@@ -628,21 +675,40 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
           <Card variant="elevated" className="p-4 sm:p-6 bg-white border border-[#e4e4e7] shadow-sm">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5">
               <div className="space-y-2">
-                <h2 className="text-lg sm:text-xl font-semibold text-[#111111] tracking-tight">
-                  Appointments
-                </h2>
+                <div className="flex items-center gap-1">
+                  <h2 className="text-lg sm:text-xl font-semibold text-[#111111] tracking-tight">
+                    Appointments
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setListAll(false)
+                      setCurrentDate(new Date())
+                      setActiveTab("appointments")
+                      setSearchQuery("")
+                      refreshAppointmentsForCurrentDate()
+                    }}
+                    title="Go to Today"
+                    className="ml-1 inline-flex items-center justify-center rounded-full p-1 hover:bg-[#f5f5f7] transition-colors cursor-pointer"
+                  >
+                    <Home className="w-4 h-4 text-[#111827]" />
+                  </button>
+                </div>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs sm:text-sm text-[#4b5563]">
                   <span>
-                    {`Selected date: ${format(currentDate, "EEE, MMM d, yyyy")}${
-                      isSameDay(currentDate, new Date()) ? " (Today)" : ""
-                    }`}
+                    {listAll
+                      ? "Listing: All appointments"
+                      : `Selected date: ${format(currentDate, "EEE, MMM d, yyyy")}${
+                          isSameDay(currentDate, new Date()) ? " (Today)" : ""
+                        }`}
                   </span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Button
                       variant="outline"
                       size="sm"
                       className="text-xs px-3 py-1"
                       onClick={() => setCurrentDate((prev) => addDays(prev, -1))}
+                      disabled={listAll}
                     >
                       Back
                     </Button>
@@ -651,21 +717,49 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
                       size="sm"
                       className="text-xs px-3 py-1"
                       onClick={() => setCurrentDate((prev) => addDays(prev, 1))}
+                      disabled={listAll}
                     >
                       Next
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs px-3 py-1"
+                      onClick={() => {
+                        setListAll((prev) => {
+                          const next = !prev
+                          // Fetch full list once when enabling
+                          if (!prev) refreshAllAppointments()
+                          return next
+                        })
+                      }}
+                    >
+                      {listAll ? "Selected Day" : "List All"}
+                    </Button>
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-[#6b7280]" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <circle cx="11" cy="11" r="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                      </svg>
+                      <input
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search"
+                        className="h-8 px-3 rounded-full border border-[#e4e4e7] bg-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#111111] w-[50%]"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
               <Button
                 variant="outline"
-                className="border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-white text-sm"
+                className="border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-white text-sm inline-flex items-center gap-2 whitespace-nowrap"
                 onClick={() => {
                   setEditingAppointment(null)
                   setShowAppointmentModal(true)
                 }}
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="w-4 h-4" />
                 Add Appointment
               </Button>
             </div>
@@ -673,7 +767,7 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
             {displayedAppointments.length === 0 ? (
               <div className="text-center py-12 text-[#86868b]">
                 <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No appointments for this date</p>
+                <p>{searchQuery.trim() ? "No matching appointments" : "No appointments for this view"}</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -807,13 +901,17 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
                                 {processingPaymentId === appointment.id ? "Updating..." : "Mark Received"}
                               </Button>
                             ) : null}
-                            <button
-                              onClick={() => handleDeleteAppointment(appointment.id)}
-                              className="p-2 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4 text-red-600" />
-                            </button>
+                            {appointment.treatmentStatus !== "PARTIAL" &&
+                            appointment.treatmentStatus !== "COMPLETED" &&
+                            !(appointment.paymentStatus !== "PAID" && appointment.paymentAmount) ? (
+                              <button
+                                onClick={() => handleDeleteAppointment(appointment.id)}
+                                className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4 text-red-600" />
+                              </button>
+                            ) : null}
                           </div>
                         </td>
                       </tr>
@@ -1054,7 +1152,11 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
                 </select>
               </div>
             </div>
-            <ReportExport onExport={handleExportReport} isLoading={isLoading} />
+            <ReportExport
+              onExport={handleExportReport}
+              isLoading={isLoading}
+              lockQuickSelectToReportType
+            />
           </Card>
         )}
 

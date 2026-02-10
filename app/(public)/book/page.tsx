@@ -658,7 +658,7 @@ export default function BookPage() {
                   Appointment Booked!
                 </h2>
                 <p className="text-base sm:text-lg text-[#86868b] mb-8 max-w-md mx-auto">
-                  Your appointment has been successfully booked. We'll send you a
+                  {"Your appointment has been successfully booked. We'll send you a"}
                   confirmation email shortly.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
@@ -738,7 +738,18 @@ export default function BookPage() {
                 />
                 <div className="flex items-center justify-end">
                   <Link
-                    href="/reset-password"
+                    href={
+                      signInData.email
+                        ? `/reset-password?email=${encodeURIComponent(signInData.email)}`
+                        : "/reset-password"
+                    }
+                    onClick={() => {
+                      try {
+                        sessionStorage.setItem("reset_prefill_email", signInData.email || "")
+                      } catch {
+                        // ignore
+                      }
+                    }}
                     className="text-sm text-[#1E40AF] hover:underline"
                   >
                     Forgot password?
@@ -754,7 +765,7 @@ export default function BookPage() {
                   Sign In
                 </Button>
                 <p className="text-sm text-[#86868b] text-center">
-                  Don't have an account?{" "}
+                  {"Don't have an account?"}{" "}
                   <a href="/register" className="text-[#1E40AF] hover:underline">
                     Sign up
                   </a>

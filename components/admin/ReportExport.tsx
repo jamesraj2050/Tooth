@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { Calendar, Download, FileSpreadsheet, FileText } from "lucide-react"
@@ -10,11 +10,13 @@ import { cn } from "@/lib/utils"
 interface ReportExportProps {
   onExport: (type: "weekly" | "monthly", startDate: Date, endDate: Date, format: "excel" | "pdf") => Promise<void>
   isLoading?: boolean
+  lockQuickSelectToReportType?: boolean
 }
 
 export const ReportExport: React.FC<ReportExportProps> = ({
   onExport,
   isLoading = false,
+  lockQuickSelectToReportType = false,
 }) => {
   const [reportType, setReportType] = useState<"weekly" | "monthly">("weekly")
   const [startDate, setStartDate] = useState<string>(
@@ -28,6 +30,13 @@ export const ReportExport: React.FC<ReportExportProps> = ({
   >("thisWeek")
 
   const handleQuickSelect = (type: "thisWeek" | "lastWeek" | "thisMonth" | "lastMonth") => {
+    if (lockQuickSelectToReportType) {
+      const isWeekly = type === "thisWeek" || type === "lastWeek"
+      const isMonthly = type === "thisMonth" || type === "lastMonth"
+      if ((reportType === "weekly" && !isWeekly) || (reportType === "monthly" && !isMonthly)) {
+        return
+      }
+    }
     const now = new Date()
     let start: Date
     let end: Date
@@ -56,6 +65,17 @@ export const ReportExport: React.FC<ReportExportProps> = ({
     setEndDate(format(end, "yyyy-MM-dd"))
     setQuickSelection(type)
   }
+
+  // When reportType changes, default to ThisWeek/ThisMonth and prevent cross selection
+  useEffect(() => {
+    if (!lockQuickSelectToReportType) return
+    if (reportType === "weekly") {
+      handleQuickSelect("thisWeek")
+    } else {
+      handleQuickSelect("thisMonth")
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reportType, lockQuickSelectToReportType])
 
   const handleExport = async (format: "excel" | "pdf") => {
     await onExport(reportType, new Date(startDate), new Date(endDate), format)
@@ -112,6 +132,7 @@ export const ReportExport: React.FC<ReportExportProps> = ({
                     "border-[#1E40AF] bg-[#1E40AF]/10 font-semibold"
                 )}
                 onClick={() => handleQuickSelect("thisWeek")}
+                disabled={lockQuickSelectToReportType && reportType !== "weekly"}
               >
                 This Week
               </Button>
@@ -124,6 +145,7 @@ export const ReportExport: React.FC<ReportExportProps> = ({
                     "border-[#1E40AF] bg-[#1E40AF]/10 font-semibold"
                 )}
                 onClick={() => handleQuickSelect("lastWeek")}
+                disabled={lockQuickSelectToReportType && reportType !== "weekly"}
               >
                 Last Week
               </Button>
@@ -143,6 +165,7 @@ export const ReportExport: React.FC<ReportExportProps> = ({
                     "border-[#1E40AF] bg-[#1E40AF]/10 font-semibold"
                 )}
                 onClick={() => handleQuickSelect("thisMonth")}
+                disabled={lockQuickSelectToReportType && reportType !== "monthly"}
               >
                 This Month
               </Button>
@@ -155,6 +178,7 @@ export const ReportExport: React.FC<ReportExportProps> = ({
                     "border-[#1E40AF] bg-[#1E40AF]/10 font-semibold"
                 )}
                 onClick={() => handleQuickSelect("lastMonth")}
+                disabled={lockQuickSelectToReportType && reportType !== "monthly"}
               >
                 Last Month
               </Button>
@@ -178,28 +202,33 @@ export const ReportExport: React.FC<ReportExportProps> = ({
         />
       </div>
 
-      <div className="flex gap-3 pt-4 border-t border-[#e5e5ea]">
-        <Button
-          type="button"
-          variant="primary"
-          onClick={() => handleExport("excel")}
-          disabled={isLoading}
-          loading={isLoading}
-          className="flex-1"
-        >
-          <FileSpreadsheet className="w-4 h-4 mr-2" />
-          Export Excel
-        </Button>
+      <div className="flex flex-col items-center gap-3 pt-4 border-t border-[#e5e5ea]">
         <Button
           type="button"
           variant="primary"
           onClick={() => handleExport("pdf")}
           disabled={isLoading}
           loading={isLoading}
-          className="flex-1"
+          className="w-48 sm:w-56 px-4 py-2"
         >
-          <FileText className="w-4 h-4 mr-2" />
-          Export PDF
+          <span className="inline-flex items-center gap-2 whitespace-nowrap">
+            <Download className="w-4 h-4" />
+            <span>Download PDF Report</span>
+          </span>
+        </Button>
+
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => handleExport("excel")}
+          disabled={isLoading}
+          loading={isLoading}
+          className="w-48 sm:w-56 px-4 py-2"
+        >
+          <span className="inline-flex items-center gap-2 whitespace-nowrap">
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>Export CSV</span>
+          </span>
         </Button>
       </div>
     </div>

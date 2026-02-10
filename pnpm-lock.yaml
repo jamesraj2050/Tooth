@@ -11,6 +11,9 @@ importers:
       '@prisma/client':
         specifier: ^6.1.0
         version: 6.19.2(prisma@6.19.2(typescript@5.9.3))(typescript@5.9.3)
+      '@supabase/supabase-js':
+        specifier: ^2.95.3
+        version: 2.95.3
       '@types/bcryptjs':
         specifier: ^2.4.6
         version: 2.4.6
@@ -52,7 +55,10 @@ importers:
         version: 14.2.35(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       next-auth:
         specifier: ^5.0.0-beta.22
-        version: 5.0.0-beta.30(next@14.2.35(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
+        version: 5.0.0-beta.30(next@14.2.35(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(nodemailer@7.0.13)(react@18.3.1)
+      nodemailer:
+        specifier: ^7.0.13
+        version: 7.0.13
       postcss:
         specifier: ^8.4.38
         version: 8.5.6
@@ -81,6 +87,9 @@ importers:
         specifier: ^3.23.8
         version: 3.25.76
     devDependencies:
+      '@types/nodemailer':
+        specifier: ^7.0.9
+        version: 7.0.9
       '@types/xlsx':
         specifier: ^0.0.36
         version: 0.0.36
@@ -459,6 +468,30 @@ packages:
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
+  '@supabase/auth-js@2.95.3':
+    resolution: {integrity: sha512-vD2YoS8E2iKIX0F7EwXTmqhUpaNsmbU6X2R0/NdFcs02oEfnHyNP/3M716f3wVJ2E5XHGiTFXki6lRckhJ0Thg==}
+    engines: {node: '>=20.0.0'}
+
+  '@supabase/functions-js@2.95.3':
+    resolution: {integrity: sha512-uTuOAKzs9R/IovW1krO0ZbUHSJnsnyJElTXIRhjJTqymIVGcHzkAYnBCJqd7468Fs/Foz1BQ7Dv6DCl05lr7ig==}
+    engines: {node: '>=20.0.0'}
+
+  '@supabase/postgrest-js@2.95.3':
+    resolution: {integrity: sha512-LTrRBqU1gOovxRm1vRXPItSMPBmEFqrfTqdPTRtzOILV4jPSueFz6pES5hpb4LRlkFwCPRmv3nQJ5N625V2Xrg==}
+    engines: {node: '>=20.0.0'}
+
+  '@supabase/realtime-js@2.95.3':
+    resolution: {integrity: sha512-D7EAtfU3w6BEUxDACjowWNJo/ZRo7sDIuhuOGKHIm9FHieGeoJV5R6GKTLtga/5l/6fDr2u+WcW/m8I9SYmaIw==}
+    engines: {node: '>=20.0.0'}
+
+  '@supabase/storage-js@2.95.3':
+    resolution: {integrity: sha512-4GxkJiXI3HHWjxpC3sDx1BVrV87O0hfX+wvJdqGv67KeCu+g44SPnII8y0LL/Wr677jB7tpjAxKdtVWf+xhc9A==}
+    engines: {node: '>=20.0.0'}
+
+  '@supabase/supabase-js@2.95.3':
+    resolution: {integrity: sha512-Fukw1cUTQ6xdLiHDJhKKPu6svEPaCEDvThqCne3OaQyZvuq2qjhJAd91kJu3PXLG18aooCgYBaB6qQz35hhABg==}
+    engines: {node: '>=20.0.0'}
+
   '@swc/counter@0.1.3':
     resolution: {integrity: sha512-e2BR4lsJkkRlKZ/qCHPw9ZaSxc0MVUd7gtbtaB7aMvHeJVYe8sOB8DBZkP2DtISHGSku9sCK6T6cnY0CtXrOCQ==}
 
@@ -477,6 +510,12 @@ packages:
   '@types/node@20.19.28':
     resolution: {integrity: sha512-VyKBr25BuFDzBFCK5sUM6ZXiWfqgCTwTAOK8qzGV/m9FCirXYDlmczJ+d5dXBAQALGCdRRdbteKYfJ84NGEusw==}
 
+  '@types/nodemailer@7.0.9':
+    resolution: {integrity: sha512-vI8oF1M+8JvQhsId0Pc38BdUP2evenIIys7c7p+9OZXSPOH5c1dyINP1jT8xQ2xPuBUXmIC87s+91IZMDjH8Ow==}
+
+  '@types/phoenix@1.6.7':
+    resolution: {integrity: sha512-oN9ive//QSBkf19rfDv45M7eZPi0eEXylht2OLEXicu5b4KoQ1OzXIw+xDSGWxSxe1JmepRR/ZH283vsu518/Q==}
+
   '@types/prop-types@15.7.15':
     resolution: {integrity: sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw==}
 
@@ -490,6 +529,9 @@ packages:
 
   '@types/react@18.3.27':
     resolution: {integrity: sha512-cisd7gxkzjBKU2GgdYrTdtQx1SORymWyaAFhaxQPK9bYO9ot3Y5OikQRvY0VYQtvwjeQnizCINJAenh/V7MK2w==}
+
+  '@types/ws@8.18.1':
+    resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
 
   '@types/xlsx@0.0.36':
     resolution: {integrity: sha512-mvfrKiKKMErQzLMF8ElYEH21qxWCZtN59pHhWGmWCWFJStYdMWjkDSAy6mGowFxHXaXZWe5/TW7pBUiWclIVOw==}
@@ -1371,6 +1413,10 @@ packages:
     resolution: {integrity: sha512-fPU6BHNpsyIhr8yyMpTLLxAbkaK8ArIBcmZIRiBLiDhjeqvXolaEmDGmELFuX9I4xDcaKKcJl+TKZLqruBbmWA==}
     engines: {node: '>=8.0.0'}
 
+  iceberg-js@0.8.1:
+    resolution: {integrity: sha512-1dhVQZXhcHje7798IVM+xoo/1ZdVfzOMIc8/rgVSijRK38EDqOJoGula9N/8ZI5RD8QTxNQtK/Gozpr+qUqRRA==}
+    engines: {node: '>=20.0.0'}
+
   ignore@5.3.2:
     resolution: {integrity: sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g==}
     engines: {node: '>= 4'}
@@ -1700,6 +1746,10 @@ packages:
 
   node-releases@2.0.27:
     resolution: {integrity: sha512-nmh3lCkYZ3grZvqcCH+fjmQ7X+H0OeZgP40OierEaAptX4XofMh5kwNbWh7lBduUzCcV/8kZ+NDLCwm2iorIlA==}
+
+  nodemailer@7.0.13:
+    resolution: {integrity: sha512-PNDFSJdP+KFgdsG3ZzMXCgquO7I6McjY2vlqILjtJd0hy8wEvtugS9xKRF2NWlPNGxvLCXlTNIae4serI7dinw==}
+    engines: {node: '>=6.0.0'}
 
   normalize-path@3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
@@ -2302,6 +2352,18 @@ packages:
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
 
+  ws@8.19.0:
+    resolution: {integrity: sha512-blAT2mjOEIi0ZzruJfIhb3nps74PRWTCz1IjglWEEpQl5XS/UNama6u2/rjFkDDouqr4L67ry+1aGIALViWjDg==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   xlsx@0.18.5:
     resolution: {integrity: sha512-dmg3LCjBPHZnQp5/F/+nnTa+miPJxUXB6vtk42YjBBKayDNagxGEeIdWApkYPOf3Z3pm3k62Knjzp7lMeTEtFQ==}
     engines: {node: '>=0.8'}
@@ -2318,13 +2380,15 @@ snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
 
-  '@auth/core@0.41.0':
+  '@auth/core@0.41.0(nodemailer@7.0.13)':
     dependencies:
       '@panva/hkdf': 1.2.1
       jose: 6.1.3
       oauth4webapi: 3.8.3
       preact: 10.24.3
       preact-render-to-string: 6.5.11(preact@10.24.3)
+    optionalDependencies:
+      nodemailer: 7.0.13
 
   '@babel/runtime@7.28.6': {}
 
@@ -2580,6 +2644,44 @@ snapshots:
 
   '@standard-schema/spec@1.1.0': {}
 
+  '@supabase/auth-js@2.95.3':
+    dependencies:
+      tslib: 2.8.1
+
+  '@supabase/functions-js@2.95.3':
+    dependencies:
+      tslib: 2.8.1
+
+  '@supabase/postgrest-js@2.95.3':
+    dependencies:
+      tslib: 2.8.1
+
+  '@supabase/realtime-js@2.95.3':
+    dependencies:
+      '@types/phoenix': 1.6.7
+      '@types/ws': 8.18.1
+      tslib: 2.8.1
+      ws: 8.19.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  '@supabase/storage-js@2.95.3':
+    dependencies:
+      iceberg-js: 0.8.1
+      tslib: 2.8.1
+
+  '@supabase/supabase-js@2.95.3':
+    dependencies:
+      '@supabase/auth-js': 2.95.3
+      '@supabase/functions-js': 2.95.3
+      '@supabase/postgrest-js': 2.95.3
+      '@supabase/realtime-js': 2.95.3
+      '@supabase/storage-js': 2.95.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   '@swc/counter@0.1.3': {}
 
   '@swc/helpers@0.5.5':
@@ -2600,6 +2702,12 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
+  '@types/nodemailer@7.0.9':
+    dependencies:
+      '@types/node': 20.19.28
+
+  '@types/phoenix@1.6.7': {}
+
   '@types/prop-types@15.7.15': {}
 
   '@types/raf@3.4.3':
@@ -2613,6 +2721,10 @@ snapshots:
     dependencies:
       '@types/prop-types': 15.7.15
       csstype: 3.2.3
+
+  '@types/ws@8.18.1':
+    dependencies:
+      '@types/node': 20.19.28
 
   '@types/xlsx@0.0.36':
     dependencies:
@@ -3295,8 +3407,8 @@ snapshots:
       '@typescript-eslint/parser': 8.53.0(eslint@8.57.1)(typescript@5.9.3)
       eslint: 8.57.1
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@8.57.1)
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.53.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1)
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.53.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1))(eslint@8.57.1)
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.53.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.53.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1)
       eslint-plugin-jsx-a11y: 6.10.2(eslint@8.57.1)
       eslint-plugin-react: 7.37.5(eslint@8.57.1)
       eslint-plugin-react-hooks: 5.0.0-canary-7118f5dd7-20230705(eslint@8.57.1)
@@ -3315,7 +3427,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0)(eslint@8.57.1):
+  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.53.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1))(eslint@8.57.1):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.3
@@ -3326,22 +3438,22 @@ snapshots:
       tinyglobby: 0.2.15
       unrs-resolver: 1.11.1
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.53.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1)
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.53.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.53.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1)
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.12.1(@typescript-eslint/parser@8.53.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1):
+  eslint-module-utils@2.12.1(@typescript-eslint/parser@8.53.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.53.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 8.53.0(eslint@8.57.1)(typescript@5.9.3)
       eslint: 8.57.1
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@8.57.1)
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.53.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1))(eslint@8.57.1)
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.53.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1):
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.53.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.53.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9
@@ -3352,7 +3464,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 8.57.1
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.53.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1)
+      eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.53.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.53.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1)
       hasown: 2.0.2
       is-core-module: 2.16.1
       is-glob: 4.0.3
@@ -3683,6 +3795,8 @@ snapshots:
       text-segmentation: 1.0.3
     optional: true
 
+  iceberg-js@0.8.1: {}
+
   ignore@5.3.2: {}
 
   ignore@7.0.5: {}
@@ -3967,11 +4081,13 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  next-auth@5.0.0-beta.30(next@14.2.35(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1):
+  next-auth@5.0.0-beta.30(next@14.2.35(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(nodemailer@7.0.13)(react@18.3.1):
     dependencies:
-      '@auth/core': 0.41.0
+      '@auth/core': 0.41.0(nodemailer@7.0.13)
       next: 14.2.35(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
+    optionalDependencies:
+      nodemailer: 7.0.13
 
   next@14.2.35(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
@@ -4001,6 +4117,8 @@ snapshots:
   node-fetch-native@1.6.7: {}
 
   node-releases@2.0.27: {}
+
+  nodemailer@7.0.13: {}
 
   normalize-path@3.0.0: {}
 
@@ -4720,6 +4838,8 @@ snapshots:
       strip-ansi: 7.1.2
 
   wrappy@1.0.2: {}
+
+  ws@8.19.0: {}
 
   xlsx@0.18.5:
     dependencies:
