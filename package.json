@@ -6,7 +6,8 @@
     "dev": "next dev",
     "dev:centro": "dotenv -e .env.local -- pnpm dev",
     "dev:tooth": "dotenv -e .env.tooth.local -- pnpm dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "next lint",
     "db:seed": "tsx prisma/seed.ts"

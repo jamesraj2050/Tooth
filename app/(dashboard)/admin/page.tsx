@@ -71,7 +71,7 @@ export default async function AdminPage() {
     paymentStatus: apt.paymentStatus,
     treatmentStatus: apt.treatmentStatus,
     createdBy: apt.createdBy,
-    adminConfirmed: (apt as any).adminConfirmed,
+    adminConfirmed: apt.adminConfirmed,
     patient: apt.patient,
     patientName: apt.patientName,
     patientEmail: apt.patientEmail,
