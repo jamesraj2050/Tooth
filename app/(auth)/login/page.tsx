@@ -14,6 +14,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl") || ""
   const verifiedParam = searchParams.get("verified") || ""
+  const registeredParam = searchParams.get("registered") || ""
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -24,6 +25,7 @@ export default function LoginPage() {
   >("")
   const [isLoading, setIsLoading] = useState(false)
   const [resendStatus, setResendStatus] = useState<"" | "sending" | "sent">("")
+  const [info, setInfo] = useState("")
 
   useEffect(() => {
     if (verifiedParam === "true") {
@@ -31,6 +33,16 @@ export default function LoginPage() {
       setErrorType("")
     }
   }, [verifiedParam])
+
+  useEffect(() => {
+    if (registeredParam === "true") {
+      setInfo(
+        "Account created. Please check your email (including spam/trash) and click the confirmation link to verify your email, then sign in."
+      )
+    } else {
+      setInfo("")
+    }
+  }, [registeredParam])
 
   const persistRegisterPrefill = () => {
     try {
@@ -141,6 +153,11 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {info && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-apple text-sm text-green-700">
+                {info}
+              </div>
+            )}
             {error && (
               <div className="p-4 bg-red-50 border border-red-200 rounded-apple text-sm">
                 {errorType === "user_not_found" ? (
@@ -202,7 +219,7 @@ export default function LoginPage() {
                 setFormData({ ...formData, password: e.target.value })
               }
               required
-              placeholder="••••••••"
+              placeholder="Enter password"
             />
             <div className="flex items-center justify-end">
               <Link

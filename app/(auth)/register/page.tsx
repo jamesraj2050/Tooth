@@ -190,7 +190,7 @@ export default function RegisterPage() {
                 setFormData({ ...formData, password: e.target.value })
               }
               required
-              placeholder="••••••••"
+              placeholder="Enter password"
             />
 
             <Input
@@ -201,7 +201,7 @@ export default function RegisterPage() {
                 setFormData({ ...formData, confirmPassword: e.target.value })
               }
               required
-              placeholder="••••••••"
+              placeholder="Confirm password"
             />
 
             <Button

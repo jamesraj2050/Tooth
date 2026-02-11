@@ -58,6 +58,7 @@ export default function BookPage() {
     notes: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [bookingEmailSent, setBookingEmailSent] = useState<boolean | null>(null)
   const [showPhoneConfirmModal, setShowPhoneConfirmModal] = useState(false)
   const [showSignInModal, setShowSignInModal] = useState(false)
   const [signInData, setSignInData] = useState({ email: "", password: "" })
@@ -223,6 +224,8 @@ export default function BookPage() {
       })
 
       if (response.ok) {
+        const json = await response.json().catch(() => ({}))
+        setBookingEmailSent(typeof json?.emailSent === "boolean" ? json.emailSent : null)
         setStep(5) // Success step
       } else {
         const errorData = await response.json()
@@ -658,8 +661,11 @@ export default function BookPage() {
                   Appointment Booked!
                 </h2>
                 <p className="text-base sm:text-lg text-[#86868b] mb-8 max-w-md mx-auto">
-                  {"Your appointment has been successfully booked. We'll send you a"}
-                  confirmation email shortly.
+                  {bookingEmailSent === true
+                    ? "Your appointment has been successfully booked. A confirmation email has been sent — please check your inbox and spam/trash folder."
+                    : bookingEmailSent === false
+                      ? "Your appointment has been successfully booked. We could not send the confirmation email right now — please contact the clinic if you need help."
+                      : "Your appointment has been successfully booked. We'll send you a confirmation email shortly."}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                   <Button
@@ -734,7 +740,7 @@ export default function BookPage() {
                   onChange={(e) =>
                     setSignInData({ ...signInData, password: e.target.value })
                   }
-                  placeholder="••••••••"
+                  placeholder="Enter password"
                 />
                 <div className="flex items-center justify-end">
                   <Link

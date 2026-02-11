@@ -175,24 +175,28 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Fire-and-forget: send appointment confirmation email (don’t block booking UX).
+    // Send confirmation email (do not fail booking if email fails).
+    let emailSent = false
     const patientEmail = appointment.patient?.email || validatedData.email
     if (patientEmail) {
-      sendAppointmentConfirmedEmail({
-        toEmail: patientEmail,
-        patientName: appointment.patient?.name || validatedData.name,
-        patientPhone: appointment.patient?.phone || validatedData.phone,
-        service: appointment.service,
-        appointmentDate: appointment.date,
-        doctorName: appointment.doctor?.name || null,
-        notes: appointment.notes || null,
-      }).catch((e) => {
+      try {
+        await sendAppointmentConfirmedEmail({
+          toEmail: patientEmail,
+          patientName: appointment.patient?.name || validatedData.name,
+          patientPhone: appointment.patient?.phone || validatedData.phone,
+          service: appointment.service,
+          appointmentDate: appointment.date,
+          doctorName: appointment.doctor?.name || null,
+          notes: appointment.notes || null,
+        })
+        emailSent = true
+      } catch (e) {
         console.error("Failed to send appointment confirmation email:", e)
-      })
+      }
     }
 
     return NextResponse.json(
-      { success: true, appointment },
+      { success: true, appointment, emailSent },
       { status: 201 }
     )
   } catch (error) {

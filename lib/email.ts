@@ -30,7 +30,11 @@ function getTransport() {
   const port = Number(getEnv("SMTP_PORT") || "587")
   const user = requiredEnv("SMTP_USER")
   const pass = requiredEnv("SMTP_PASS")
-  const secure = (getEnv("SMTP_SECURE") || "").toLowerCase() === "true"
+  const secureEnv = (getEnv("SMTP_SECURE") || "").trim().toLowerCase()
+  // If SMTP_SECURE is not set, choose a safe default based on port.
+  // (465 = implicit TLS, 587 = STARTTLS)
+  const secure =
+    secureEnv === "true" ? true : secureEnv === "false" ? false : port === 465
 
   cachedTransport = nodemailer.createTransport({
     host,

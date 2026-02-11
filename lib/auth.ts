@@ -12,6 +12,9 @@ if (typeof process !== 'undefined' && process.versions?.node) {
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: process.env.AUTH_SECRET,
+  // On Vercel (and other platforms), rely on the request host for URLs.
+  // Prevents redirects to stale/incorrect deployment URLs (DEPLOYMENT_NOT_FOUND).
+  trustHost: true,
   providers: [
     Credentials({
       credentials: {
@@ -79,6 +82,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
+    redirect: async ({ url, baseUrl }) => {
+      // Always allow relative redirects
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+      // Allow same-origin absolute redirects
+      try {
+        const target = new URL(url)
+        if (target.origin === baseUrl) return url
+      } catch {
+        // ignore
+      }
+      // Fallback to site root
+      return `${baseUrl}/`
+    },
     jwt: async ({ token, user }) => {
       if (user) {
         token.id = user.id

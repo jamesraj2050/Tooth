@@ -85,11 +85,11 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-white py-8 sm:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-[#1d1d1f] mb-2 tracking-tight">
+        <div className="mb-5 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-[#1d1d1f] mb-1 tracking-tight">
             Welcome back, {user.name}
           </h1>
-          <p className="text-lg sm:text-xl text-[#86868b] font-light">
+          <p className="text-base sm:text-lg text-[#86868b] font-normal">
             Manage your appointments and profile
           </p>
         </div>

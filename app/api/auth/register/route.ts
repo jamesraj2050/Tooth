@@ -17,6 +17,9 @@ export async function POST(request: NextRequest) {
     const validatedData = registerSchema.parse(body)
 
     const email = validatedData.email.trim().toLowerCase()
+    const emailRedirectTo = process.env.NEXTAUTH_URL
+      ? `${process.env.NEXTAUTH_URL}/login?verified=true`
+      : undefined
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -58,34 +61,107 @@ export async function POST(request: NextRequest) {
 
     // Trigger Supabase email verification (patients only).
     // This creates a Supabase Auth user and sends a verification email based on Supabase project settings.
+    let verificationEmailTriggered = false
+    let supabaseErrorMessage: string | null = null
+
     try {
       const supabase = createSupabasePublicClient()
-      const emailRedirectTo = process.env.NEXTAUTH_URL
-        ? `${process.env.NEXTAUTH_URL}/login?verified=true`
-        : undefined
 
-      const { error } = await supabase.auth.signUp({
-        email,
-        password: validatedData.password,
-        options: emailRedirectTo ? { emailRedirectTo } : undefined,
-      })
+      // Attempt signUp with redirect first (best UX), but retry without it if Supabase rejects the URL.
+      let signUpError: { message?: string } | null = null
 
-      // If the user already exists in Supabase Auth, resend the signup confirmation email.
-      if (error && /already|registered|exists/i.test(error.message || "")) {
-        await supabase.auth.resend({
-          type: "signup",
+      {
+        const { error } = await supabase.auth.signUp({
           email,
+          password: validatedData.password,
           options: emailRedirectTo ? { emailRedirectTo } : undefined,
         })
+        signUpError = error ? { message: error.message } : null
       }
-    } catch {
-      // If Supabase is unavailable, still allow registration (don't block).
+
+      if (signUpError && emailRedirectTo && /redirect|url/i.test(signUpError.message || "")) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password: validatedData.password,
+        })
+        signUpError = error ? { message: error.message } : null
+      }
+
+      // If the user already exists in Supabase Auth, resend the signup confirmation email.
+      if (signUpError && /already|registered|exists/i.test(signUpError.message || "")) {
+        let resendError: { message?: string } | null = null
+        {
+          const { error } = await supabase.auth.resend({
+            type: "signup",
+            email,
+            options: emailRedirectTo ? { emailRedirectTo } : undefined,
+          })
+          resendError = error ? { message: error.message } : null
+        }
+
+        if (resendError && emailRedirectTo && /redirect|url/i.test(resendError.message || "")) {
+          const { error } = await supabase.auth.resend({
+            type: "signup",
+            email,
+          })
+          resendError = error ? { message: error.message } : null
+        }
+
+        if (resendError) {
+          supabaseErrorMessage = resendError.message || "Failed to resend verification email"
+        } else {
+          verificationEmailTriggered = true
+        }
+      } else if (signUpError) {
+        supabaseErrorMessage = signUpError.message || "Failed to create Supabase Auth user"
+      } else {
+        verificationEmailTriggered = true
+      }
+    } catch (e) {
+      supabaseErrorMessage = e instanceof Error ? e.message : "Supabase signup failed"
+    }
+
+    if (!verificationEmailTriggered) {
+      console.error("Supabase verification email not triggered:", {
+        email,
+        emailRedirectTo,
+        error: supabaseErrorMessage,
+      })
+
+      // Roll back DB user creation/upgrade so we don't create accounts without verification email.
+      try {
+        if (!existingUser) {
+          await prisma.user.delete({ where: { id: user.id } })
+        } else {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              name: existingUser.name,
+              phone: existingUser.phone,
+              password: existingUser.password,
+            },
+          })
+        }
+      } catch (rollbackErr) {
+        console.error("Failed to rollback user after Supabase failure:", rollbackErr)
+      }
+
+      return NextResponse.json(
+        {
+          error:
+            "Could not send verification email. Please try again in a minute. If the issue continues, contact the clinic.",
+          details:
+            process.env.NODE_ENV !== "production" ? supabaseErrorMessage : undefined,
+        },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json(
       {
         success: true,
         needsEmailVerification: true,
+        verificationEmailTriggered: true,
         user: { id: user.id, email: user.email, name: user.name },
       },
       { status: 201 }
